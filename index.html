@@ -1,0 +1,41 @@
+<html>
+
+<head>
+    <title>Tesseract Demo</title>
+</head>
+
+<body>
+    <img src="./1.jpg" width="400" height="200">
+    <p id="mrz-code"></p>
+    <p id="data"></p>
+</body>
+<script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
+<script src="./index.js"></script>
+<script>
+    const elem1 = document.getElementById('mrz-code');
+    const elem2 = document.getElementById('data');
+    Tesseract.recognize(
+        './1.jpg',
+        'eng', {
+            logger: m => console.log(m)
+        }
+    ).then((resp) => {
+        console.log(resp);
+        const mrzCode = [];
+        resp.data.lines.forEach(element => {
+            if (element.text.indexOf('<') > -1) {
+                element.text = element.text.replace('\n', '');
+                element.text = element.text.replace('\n', '');
+                element.text = element.text.replace(' ', '');
+                element.text = element.text.replace(' ', '');
+                mrzCode.push(element.text);
+            }
+        });
+        console.log(mrzCode);
+        const data = parse(mrzCode[0], mrzCode[1]);
+        elem1.innerHTML = `MRZ Code: ${mrzCode.join(',')}`;
+        elem2.innerHTML = `Data: ${JSON.stringify(data)}`;
+    })
+</script>
+
+</html>
