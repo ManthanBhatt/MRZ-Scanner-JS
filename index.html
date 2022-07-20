@@ -10,12 +10,12 @@
     <p id="data"></p>
 </body>
 <script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
-<script src="./index.js"></script>
+<script src="./mrz-parser.js"></script>
 <script>
     const elem1 = document.getElementById('mrz-code');
     const elem2 = document.getElementById('data');
     Tesseract.recognize(
-        './1.jpg',
+        './images/1.jpg',
         'eng', {
             logger: m => console.log(m)
         }
