@@ -1,41 +1,78 @@
 <html>
 
 <head>
-    <title>Tesseract Demo</title>
+    <title>Tesseract MRZ Demo</title>
 </head>
 
 <body>
-    <img src="./1.jpg" width="400" height="200">
+    <img id="can-img" width="100" height="60" /><br><br>
+    <input type="file" accept="image/*" id="image" /><br><br>
+    <p id="progress"></p>
     <p id="mrz-code"></p>
     <p id="data"></p>
 </body>
 <script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
 <script src="./mrz-parser.js"></script>
 <script>
-    const elem1 = document.getElementById('mrz-code');
-    const elem2 = document.getElementById('data');
-    Tesseract.recognize(
-        './images/1.jpg',
-        'eng', {
-            logger: m => console.log(m)
+    const reader = new FileReader();
+    const fileInput = document.getElementById("image");
+    const img = document.createElement("img");
+    reader.onload = e => {
+        console.log(e.target.result);
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            ctx.filter = "brightness(140%)";
+            ctx.drawImage(img, 0, 0);
+            console.log(canvas.toDataURL('image/jpeg'));
+            document.getElementById("can-img").src = canvas.toDataURL('image/jpeg');
+            scanForMRZCode(canvas.toDataURL('image/jpeg'))
         }
-    ).then((resp) => {
-        console.log(resp);
-        const mrzCode = [];
-        resp.data.lines.forEach(element => {
-            if (element.text.indexOf('<') > -1) {
-                element.text = element.text.replace('\n', '');
-                element.text = element.text.replace('\n', '');
-                element.text = element.text.replace(' ', '');
-                element.text = element.text.replace(' ', '');
-                mrzCode.push(element.text);
-            }
-        });
-        console.log(mrzCode);
-        const data = parse(mrzCode[0], mrzCode[1]);
-        elem1.innerHTML = `MRZ Code: ${mrzCode.join(',')}`;
-        elem2.innerHTML = `Data: ${JSON.stringify(data)}`;
+        img.src = e.target.result;
+    }
+    fileInput.addEventListener('change', e => {
+        const f = e.target.files[0];
+        reader.readAsDataURL(f);
     })
+
+    const scanForMRZCode = (imageData) => {
+        const elem1 = document.getElementById('mrz-code');
+        const elem2 = document.getElementById('data');
+        Tesseract.recognize(
+            imageData,
+            'eng', {
+                logger: (m) => {
+                    console.log(m)
+                    if (m.progress && m.status == 'recognizing text') {
+                        document.getElementById('progress').innerHTML = "Scanning Done... " + (Math.round((m.progress * 100))) + "%"
+                        if (Math.round((m.progress * 100)) == 100) {
+                            document.getElementById('progress').innerHTML = ''
+                        }
+                    } else {
+                        document.getElementById('progress').innerHTML = ''
+                    }
+                }
+            }
+        ).then((resp) => {
+            console.log(resp);
+            const mrzCode = [];
+            resp.data.lines.forEach(element => {
+                if (element.text.indexOf('<') > -1) {
+                    element.text = element.text.replace('\n', '');
+                    element.text = element.text.replace('\n', '');
+                    element.text = element.text.replace(' ', '');
+                    element.text = element.text.replace(' ', '');
+                    mrzCode.push(element.text);
+                }
+            });
+            console.log(mrzCode);
+            const data = parse(mrzCode[0], mrzCode[1]);
+            elem1.innerHTML = `MRZ Code: ${mrzCode.join(',')}`;
+            elem2.innerHTML = `Data: ${JSON.stringify(data)}`;
+        })
+    }
 </script>
 
 </html>
